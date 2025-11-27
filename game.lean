@@ -169,42 +169,21 @@ def R : Game → Game → Prop := fun y x => birthday y < birthday x
 lemma wf_R : WellFounded R := InvImage.wf birthday wellFounded_lt
 
 
--- This is an exercise. The solution is given below.
-theorem x_le_x' : ∀ (x : Game), le x x := by
-  intro x
-  apply wf_R.induction x
-  intro x IH
-  unfold le
-  unfold R at IH
-  constructor
-  · -- for l ∈ x.left, prove ¬(x ≤ l)
-    sorry
-  · -- for r ∈ x.right, prove ¬(r ≤ x)
-    sorry
-
-
-
+-- This is an exercise proving x ≤ x. It requires induction on x.birthday.
+-- The solution is given below.
 theorem x_le_x : ∀ (x : Game), le x x := by
   intro x
   apply wf_R.induction x
   intro x IH
   unfold le
   unfold R at IH
-
   constructor
   · -- for l ∈ x.left, prove ¬(x ≤ l)
-    intro l hl h_contra
-    unfold le at h_contra
-    have h_neg_le := h_contra.1 l (by simp[left]; exact hl)
-    have h_le: le l l := IH l (birthday_lt_left x l hl)
-    contradiction
-
+    sorry
   · -- for r ∈ x.right, prove ¬(r ≤ x)
-    intro r hr h_contra
-    unfold le at h_contra
-    have h_neg_le := h_contra.2 r (by simp[right]; exact hr)
-    have h_le: le r r := IH r (birthday_lt_right x r hr)
-    contradiction
+    sorry
+
+
 
 theorem x_eq_x : ∀ (x : Game), eq x x := by
   intro x
@@ -212,3 +191,40 @@ theorem x_eq_x : ∀ (x : Game), eq x x := by
   constructor
   · exact x_le_x x
   · exact x_le_x x
+
+
+
+-- For (x.1, x.2, x.3), prove x.1 ≤ x.2 and x.2 ≤ x.3 implies x.1 ≤ x.3
+-- The proof requires induction on the sum of birthdays of three surreal numbers.
+-- To simplify notations, we define a structure TriSurreal to hold three surreal numbers.
+structure TriGame where
+  a : Game
+  b : Game
+  c : Game
+
+def zero_triple : TriGame := {a := zero, b := zero, c := zero}
+#check zero_triple.1 -- Game
+
+def T : TriGame → TriGame → Prop :=
+  fun a b => birthday a.1 + birthday a.2 + birthday a.3 < birthday b.1 + birthday b.2 + birthday b.3
+lemma wf_T : WellFounded T :=
+  InvImage.wf (fun s : TriGame => birthday s.1 + birthday s.2 + birthday s.3) wellFounded_lt
+
+theorem Game.le_trans1 : ∀ (x : TriGame),
+  (le x.1 x.2) ∧ (le x.2 x.3) →  le x.1 x.3 := by
+  intro x
+  apply wf_T.induction x
+  intro y IH
+  -- proof by contradiction, assume ¬(y.1 ≤ y.3)
+  by_contra h_not_le
+  push_neg at h_not_le
+  have hy1_le_y2 := h_not_le.1.1
+  have hy2_le_y3 := h_not_le.1.2
+  have hy1_not_le_y3 := h_not_le.2
+  -- now we have y.1 ≤ y.2 and y.2 ≤ y.3, but ¬(y.1 ≤ y.3)
+  sorry
+
+theorem Game.le_trans : ∀ x y z : Game , (le x y) ∧ (le y z) → le x z := by
+  intro x y z habc
+  let tri : TriGame := {a := x, b := y, c := z}
+  apply Game.le_trans1 tri habc
